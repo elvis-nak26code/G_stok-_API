@@ -85,6 +85,7 @@ exports.addFournisseur = async (req, res) => {
 exports.addUtilisateur = async (req, res) => {
     const Utilisateur = require('../models/user');
     const bcrypt = require('bcrypt');
+    const jwt = require('jsonwebtoken');
     const { password, confirmPassword } = req.body;
     try {
         // Vérification si l'utilisateur existe déjà
@@ -100,8 +101,14 @@ exports.addUtilisateur = async (req, res) => {
             password: hashedPassword
         });
         await utilisateur.save();
-        res.status(201).json(utilisateur);
+
+        // connextion auto apres inscription
+        const token = jwt.sign({ id: utilisateur._id }, "gstockNak263secret" , { expiresIn: '24h' });
+
+        res.status(201).json({ token, utilisateur });
+
         console.log("Utilisateur ajouté avec succès :", utilisateur);
+        
     } catch (error) {
         res.status(400).json({ message: error.message });
         console.log("Erreur lors de l'ajout de l'utilisateur :", error);
@@ -499,10 +506,14 @@ exports.enregistrerCredit = async (req, res) => {
             produits: produits.map(item => item.produitId),
             montantTotal
         });
-
+        
+        
         await user.credits.push(credit._id);
         await user.save();
         await credit.save();
+        
+        
+        
 
         res.status(200).json({ message: "Crédit enregistré avec succès" });
         console.log("Crédit enregistré avec succès");
@@ -534,7 +545,7 @@ exports.getCredits = async (req, res) => {
         }
 
         res.status(200).json(user.credits);
-        // console.log("Crédits récupérés avec succès :", user.credits);
+        console.log("Crédits récupérés avec succès :", user.credits);
     } catch (error) {
         res.status(500).json({ message: error.message });
         console.log("Erreur lors de la récupération des crédits :", error);
